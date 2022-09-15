@@ -15,7 +15,7 @@ from sqlalchemy import create_engine
 # Set Global Variables
 USER = 'username'
 PASSWORD = 'password'
-SERVER_IP = 'server_ip:port_number' # Server IP + Port
+SERVER_IP = 'server_ip:server_port' # Server IP + Port
 SCHEMA = 'cnpj'
 
 class DB_CNPJ:
@@ -131,7 +131,7 @@ class DB_CNPJ:
 
             temp_file = io.BytesIO()
             # Select layout from filename
-            model = file.replace('.zip', '').split('.')[-1].replace('CSV', '').upper() if file.find('SIMPLES') < 0 else 'SIMPLES'
+            model = ''.join(letter for letter in file.split('.')[0] if letter.isalpha()).upper()
             # Unzip file into memory
             with zipfile.ZipFile(file, 'r') as zip_ref:
                 temp_file.write(zip_ref.read(zip_ref.namelist()[0]))
@@ -218,7 +218,7 @@ if __name__ == '__main__':
     obj.check_files()
 
     # Type the name of the file you want to download
-    url = [x for x in obj.urls if x.find('Simples') > 0][0]
+    url = [x for x in obj.urls if x.find('Empresas0') > 0][0]
     obj.download_file(url, url.split('/')[-1])
     obj.files = [url.split('/')[-1]]
     obj.upload_to_postgresql(first_upload_truncate=True)
