@@ -1,7 +1,7 @@
 # SCRIPT TO DOWNLOAD AND LOAD FEDERAL REVENUE CNPJ
 # Create by: Ney Moresco
 # Date: 2021-09-21
-# Update: 2022-03-02
+# Update: 2022-10-10
 
 import io
 import os
