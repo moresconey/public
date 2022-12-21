@@ -7,29 +7,19 @@ import io
 import os
 import time
 import zipfile
-import re
 import requests
 import pandas as pd
 from sqlalchemy import create_engine
-
-# Set Global Variables
-USER = 'username'
-PASSWORD = 'password'
-SERVER_IP = 'server_ip:server_port' # Server IP + Port
-SCHEMA = 'cnpj'
+from pySmartDL import SmartDL
 
 class DB_CNPJ:
     # Function download files
     def download_file(self, url: str, dest_file: str):
-        req = requests.get(url)
-        file = open(dest_file, 'wb')
-        for chunk in req.iter_content(100000):
-            file.write(chunk)
-        file.close()
-        return True
+        _ = SmartDL(url, dest_file).start()
 
     def __init__(self, user, password, ip_postgres, schema):
         # Set Variables
+        self.url_base = 'http://200.152.38.155/CNPJ/'
         self.user = user
         self.password = password
         self.serverip = ip_postgres
@@ -37,19 +27,24 @@ class DB_CNPJ:
         self.files = []
         self.uploaded = []
         self.engine = None
+        HTML = requests.get(self.url_base)
+        df = pd.read_html(HTML.content.decode('utf8'))[0]
+        df = df.drop(columns=['Unnamed: 0', 'Description'])
+        df = df[df['Name'].str.find('.zip') > 0]
+        self.df = df
 
-    def get_last_update(self):
-        self.HTML = requests.get('https://www.gov.br/receitafederal/pt-br/assuntos/orientacao-tributaria/cadastros/consultas/dados-publicos-cnpj')
-        return self.HTML.text.split('Atualizado em')[1][36:46]
-
-    def check_files(self, download = False):
+    def download_files(self, files = []):
         # Create an array with filenames and start download
-        self.urls = [f'http://{i}.zip' for i in re.findall('http://(.*?).zip', self.HTML.text)][:-2]
-        self.files = [x.split('/')[-1] for x in self.urls]
+        # url_base = 'http://200.152.38.155/CNPJ/'
+        # self.urls = [f'http://{i}.zip' for i in re.findall('http://(.*?).zip', self.HTML.text)][:-2]
+        # self.files = [x.split('/')[-1] for x in self.urls]
 
-        if download:
-            for i in self.urls:
-                self.download_file(i, i.split('/')[-1])
+        if files == []:
+            files = self.df.Name.values
+
+        for _ , row in self.df.iterrows():
+            if row.Name in files:
+                self.download_file(self.url_base + row.Name, os.getcwd() + '\\' + row.Name)
 
     def psql_insert_copy(table, conn, keys, data_iter):
         import csv
@@ -112,28 +107,28 @@ class DB_CNPJ:
                                     'cd_pais': [], 'st_representante': [], 'st_nome_representante': [], 'cd_qualificacao_representante': [], 'cd_faixa_etaria': []},
                                 'table_name_db': 'tb_socio'},
                         'PAISES': {'columns': {'cd_pais': [], 'st_pais': []}, 'table_name_db': 'tb_pais'},
-                        'MUNICIPIOS': {'columns': {'cd_municipio': [], 'st_municipio': []}, 'table_name_db': 'tb_municipio'},
+                        'MUNICIPIOS': {'columns': {'cd_municipio': [], 'st_municipio': []}, 'table_name_db': 'tb_municipios'},
                         'QUALIFICACOES': {'columns': {'cd_qualificacao': [], 'st_qualificacao': []}, 'table_name_db': 'tb_qualificacao_socio'},
                         'NATUREZAS': {'columns': {'cd_natureza_juridica': [], 'st_natureza_juridica': []}, 'table_name_db': 'tb_natureza_juridica'},
                         'MOTIVOS': {'columns': {'cd_motivo_situacao_cadastral': [], 'st_motivo_situacao_cadastral': []}, 'table_name_db': 'tb_motivo_situacao_cadastral'},
                         'CNAES': {'columns': {'cd_cnae': [], 'st_cnae': []}, 'table_name_db': 'tb_cnae'}
                         }
 
-        for file in self.files:
+        for _ , row in self.df.iterrows():
             # Check loaded files
-            if file in self.uploaded:
+            if row.Name in self.uploaded:
                 continue
 
             if first_upload_truncate:
-                r = self.create_table(file)
+                r = self.create_table(row.Name)
                 if r != 'Exists':
                     print('Base {} Created!'.format(r))
 
             temp_file = io.BytesIO()
             # Select layout from filename
-            model = ''.join(letter for letter in file.split('.')[0] if letter.isalpha()).upper()
+            model = ''.join(letter for letter in row.Name.split('.')[0] if letter.isalpha()).upper()
             # Unzip file into memory
-            with zipfile.ZipFile(file, 'r') as zip_ref:
+            with zipfile.ZipFile(row.Name, 'r') as zip_ref:
                 temp_file.write(zip_ref.read(zip_ref.namelist()[0]))
 
             # Indicator back to zero
@@ -157,7 +152,8 @@ class DB_CNPJ:
                     chunk.to_sql(self.layout_files[model]['table_name_db'], self.engine, if_exists="append", index=False, method= DB_CNPJ.psql_insert_copy)
 
             # Store processed filenames
-            self.uploaded.append(file)
+            print(f'File {row.Name} uploaded!')
+            self.uploaded.append(row.Name)
 
     def create_table(self, file):
         file = file.split('.')[0]
@@ -177,8 +173,8 @@ class DB_CNPJ:
         'CREATE INDEX ix_estab_nome_fantasia ON cnpj.tb_estabelecimento USING hash(st_nome_fantasia);',
         'CREATE INDEX ix_estab_uf ON cnpj.tb_estabelecimento USING hash(st_uf);',
         'CREATE INDEX ix_estab_municipio ON cnpj.tb_estabelecimento USING hash(cd_municipio)',
-        'CREATE INDEX ix_muni_cod_municipio ON cnpj.tb_municipio USING hash(cd_municipio);',
-        'CREATE INDEX ix_muni_municipio ON cnpj.tb_municipio USING hash(st_municipio);',
+        'CREATE INDEX ix_muni_cod_municipio ON cnpj.tb_municipios USING hash(cd_municipio);',
+        'CREATE INDEX ix_muni_municipio ON cnpj.tb_municipios USING hash(st_municipio);',
         'CREATE INDEX ix_simples_cnpj_base ON cnpj.tb_dados_simples USING hash(st_cnpj_base);',
         'CREATE INDEX ix_empresa_cnpj_base ON cnpj.tb_empresa USING hash(st_cnpj_base);',
         'CREATE INDEX ix_socio_cnpj_base ON cnpj.tb_socio USING hash(st_cnpj_base);',
@@ -188,40 +184,25 @@ class DB_CNPJ:
         for sql in indexes:
             self.engine.execute(sql)
 
-    def daily_routine(self, download = True, upload = True, index_base = False):
-        lines = '01/01/1900'
-        if os.path.exists('info.txt'):
-            with open('info.txt', 'r') as f:
-                lines = f.readlines()
+    def show_files(self):
+        print(self.df)
 
-        if self.get_last_update() == lines[1]:
-            return "Nothing to do!"
-        else:
-            if download:
-                self.check_files(download=True)
-            if upload:
-                self.upload_to_postgresql()
-
-            if index_base:
-                self.index_db()
-
-            with open('info.txt', 'w') as f:
-                f.write('DATE_LAST_UPDATE\n{}'.format(self.get_last_update()))
-
-            return "Updated: {}".format(self.get_last_update())
 
 if __name__ == '__main__':
+    # Set Global Variables
+    USER = 'username'
+    PASSWORD = 'password'
+    SERVER_IP = 'server_ip:server_port' # Server IP + Port
+    SCHEMA = 'cnpj'
     obj = DB_CNPJ(USER, PASSWORD, SERVER_IP, SCHEMA)
 
-    # For a single update file per file
-    obj.get_last_update()
-    obj.check_files()
+    obj.show_files()
 
+    # For a single update file per file
     # Type the name of the file you want to download
-    url = [x for x in obj.urls if x.find('Empresas0') > 0][0]
-    obj.download_file(url, url.split('/')[-1])
-    obj.files = [url.split('/')[-1]]
+    # obj.download_files(['Municipios.zip'])
+
+    obj.uploaded = []
     obj.upload_to_postgresql(first_upload_truncate=True)
 
-    # For routines
-    print(obj.daily_routine(download = True, upload = False, index_base = False))
+    obj.index_db()
