@@ -147,7 +147,7 @@ def plot_stats_univariate(x, title = None, MAIN_COLOR = 'aqua', theme = 'dark', 
     # Drop NA to build charts
     x = _removena(x)
 
-    fig, axes = plt.subplots(5, sharex=True, figsize=(10, 6), gridspec_kw= {"height_ratios": (.3, 1, .3, .4, .5)})
+    fig, axes = plt.subplots(5, sharex=True, gridspec_kw= {"height_ratios": (.3, 1, .3, .4, .5)})
 
     for ax in axes:
         if ax == axes[0]:
