@@ -217,7 +217,8 @@ def plot_stats_univariate(x, title = None, MAIN_COLOR = 'aqua', theme = 'dark', 
 
         elif ax == axes[4]:
             ax.set_yticklabels(['','Statistics'], rotation = 90, va = "center")
-            
+
+
             ax.text(.01,.5,'Sum Total: {}\nMax: {}\nMin: {}'.format(
                 round(stats['sum'], 2),
                 round(stats['max'], 2),
