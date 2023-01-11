@@ -147,7 +147,7 @@ def plot_stats_univariate(x, title = None, MAIN_COLOR = 'aqua', theme = 'dark', 
     # Drop NA to build charts
     x = _removena(x)
 
-    fig, axes = plt.subplots(5, sharex=True, gridspec_kw= {"height_ratios": (.3, 1, .3, .4, .5)})
+    fig, axes = plt.subplots(5, sharex=True, figsize=(10, 6), gridspec_kw= {"height_ratios": (.3, 1, .3, .4, .5)})
 
     for ax in axes:
         if ax == axes[0]:
@@ -210,21 +210,14 @@ def plot_stats_univariate(x, title = None, MAIN_COLOR = 'aqua', theme = 'dark', 
             sns.histplot(x, color = MAIN_COLOR, ax = ax)
 
         elif ax == axes[3]:
-            sns.boxplot(x,  color = MAIN_COLOR, ax = ax)
+            sns.boxplot(x = x,  color = MAIN_COLOR, ax = ax)
 
             for n_print in range(int(stats['min']), int(stats['max']), math.ceil(max(stats['max'], abs(stats['min'])) / 8)):
                 ax.text(x = n_print, y = 0.5, s = n_print , ha = 'center', va = 'top', color = MAIN_COLOR, alpha = .2, size = 12)
 
         elif ax == axes[4]:
             ax.set_yticklabels(['','Statistics'], rotation = 90, va = "center")
-
-            # Set Outliers Legend
-            # if (outliers is not None) & (len(self.outliers) > 0):
-            #     text = r'$\bf*Outliers$ removed $\bf{}$ record(s)'.format(len(self.outliers))
-            #     text += '\nMin: {} | Max: {}'.format(round(np.min(self.outliers), 2), round(np.max(self.outliers), 2))
-
-            #     plt.annotate(text, (0,0), (0, -10), xycoords='axes fraction', textcoords='offset points', va='center', fontsize = 9)
-        
+            
             ax.text(.01,.5,'Sum Total: {}\nMax: {}\nMin: {}'.format(
                 round(stats['sum'], 2),
                 round(stats['max'], 2),
