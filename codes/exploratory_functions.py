@@ -9,14 +9,14 @@ class chart_themes:
     white = {
         # Set font
         'font.family':  'sans-serif',
-        'font.sans-serif' : 'Gotham',
+        #'font.sans-serif' : 'Gotham',
 
         'legend.facecolor' : 'white',
         
     }
     dark = {
         'font.family':  'sans-serif',
-        'font.sans-serif' : 'Gotham',
+        #'font.sans-serif' : 'Gotham',
 
         # background:
         'figure.facecolor': '#2f3033',
@@ -39,7 +39,7 @@ class chart_themes:
         
     blue = {
         'font.family':  'sans-serif',
-        'font.sans-serif' : 'Gotham',
+        #'font.sans-serif' : 'Gotham',
 
         # background: bluish dark grey
         'figure.facecolor': '#28345c',
@@ -152,7 +152,7 @@ def plot_stats_univariate(x, title = None, MAIN_COLOR = 'aqua', theme = 'dark', 
     for ax in axes:
         if ax == axes[0]:
             # Set Chart's Title
-            text = r'Univariate Descriptive Statistics - $\bf{}$'.format(title) if title is not None else "Univariate Descriptive Statistics"
+            text = r'Univariate Descriptive Statistics - $\mathbf{' + str(title) + '}$' if title is not None else "Univariate Descriptive Statistics"
             ax.set_title(text, loc = 'left', fontsize = 16)
 
             ax.set_yticklabels(['','Data'], rotation = 90, va = "top")
@@ -328,17 +328,19 @@ def plot_cat_distribution(x, title = None, BAR_COLOR = 'lime', theme = 'dark', a
 
     ax.text(x = 0, y = 1, s = 'Below the number of occurrences, the cumulative sum of the percentages.', ha = 'left', transform=ax.transAxes, va = 'bottom', fontsize = 8)
 
-    title = r'Distribution of $\bf{}$'.format(title) if title is not None else 'Distribution of Categorical Variable'
+    title = r'Distribution of $\mathbf{' + (title if title is not None else 'Distribution of Categorical Variable') + '}$'
     
     ax.set_title(title, loc = 'left', va = 'bottom', fontsize = 16)
     ax.set(xticklabels=[])
 
-    ax.set_xlabel(r'Total of records analyzed $\bf{}$'.format(total) + ' | ' + 
-        r'$\bf{}$ Missing Values'.format("No" if n_miss == 0 else str(n_miss) + '('+ round(n_miss/n_total*100,1) +'%)'), loc = 'left', fontsize = 12, va = 'center')
+    # ax.set_xlabel(r'Total of records analyzed $\bf{}$'.format(total) + ' | ' + 
+    #     r'$\bf{}$ Missing Values'.format("No" if n_miss == 0 else str(n_miss) + '('+ round(n_miss/n_total*100,1) +'%)'), loc = 'left', fontsize = 12, va = 'center')
+    ax.set_xlabel(r'Total of records analyzed $\mathbf{' + str(total) + '}$ | ' + 
+            r'$\mathbf{' + ("No" if n_miss == 0 else str(n_miss) + '(' + str(round(n_miss/n_total*100,1)) + '%)') + '}$ Missing Values', loc = 'left', fontsize = 12, va = 'center')
 
     # Annotation below the chart
     if list_others != []:
-        text = r'$\bfOthers$ contain $\bf{}$ categories: '.format(len(list_others))
+        text = r'$\mathbf{Others}$ contain $\mathbf{' + str(len(list_others)) + '}$ categories: '
         text = text + '|'.join(list_others)
         for i in range(95, len(text), 95):
             while text[i] != '|': 
@@ -375,7 +377,8 @@ def plot_stats_bivariate(X, y, MAIN_COLOR = 'royalblue', theme = 'dark',x_name =
     sns.residplot(x=X, y=y, scatter_kws = {'color': MAIN_COLOR, 'alpha' : .3}, line_kws={'color': 'red', 'lw': 2, 'alpha': 0.7}, ax=ax[1]).axhline(0, color = 'red')
     title = 'Bivariate Analysis'
     if x_name is not None and y_name is not None:
-        title = title + r' $\bf{}$ and $\bf{}$'.format(x_name, y_name)
+        title = title + r' $\mathbf{' + x_name + '}$ and $\mathbf{' + y_name + '}$'
+
     ax[0].text(x = 0, y = 1.15, s= title, va = 'top', fontsize = 16, transform= ax[0].transAxes)
     ax[0].text(x = 0, y = 1.05, s= 'Scatter with Linear Regression', va = 'top', fontsize = 11, transform= ax[0].transAxes)
     ax[1].text(x = 0, y = 1.05, s= 'Residual Chart', va = 'top', fontsize = 11, transform= ax[1].transAxes)
@@ -414,7 +417,7 @@ def plot_cat_bivariate(X, y, MAIN_COLOR = 'royalblue', theme = 'dark', x_name = 
 
     title = 'Bivariate Analysis'
     if x_name is not None and y_name is not None:
-        title = title + r' $\bf{}$ and $\bf{}$'.format(x_name, y_name)
+        title = title + r' $\mathbf{' + x_name + '}$ and $\mathbf{' + y_name + '}$'
 
     ax.text(x=0.0, y=1.1, s= title, fontsize=16, ha='left', va='bottom', transform=ax.transAxes)
 
